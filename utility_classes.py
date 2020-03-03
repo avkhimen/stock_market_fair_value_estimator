@@ -53,7 +53,7 @@ class FairValue():
 	def get_expected_growth(self):
 		pass
 
-	def company_fair_value(self):
+	def get_company_fair_value(self):
 		"""Returns the fair value of the company"""
 		fair_value = self.get_average_eps() * (self.no_growth_eps + self.growth_factor * self.get_expected_growth()) * 4.4 / self.Y
 
@@ -88,4 +88,18 @@ class UndervaluedCompanies():
 			return True
 		else:
 			return False
+
+class CompanyRecord:
+	def __init__(self, company_symbol, current_value, fair_value, document_name):
+		self.company_symbol = company_symbol
+		self.current_value = current_value
+		self.fair_value = fair_value
+		self.document_name = document_name
+
+	def create_record(self):
+		"""Opens the document and werites info"""
+		f = open(self.document_name, "a+")
+		f.write("{}, current value:, {}, fair value:, {}\r".format(self.company_symbol, self.current_value, self.fair_value))
+		f.close()
+
 
