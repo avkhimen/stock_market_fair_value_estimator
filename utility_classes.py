@@ -3,10 +3,10 @@ import json
 from pprint import pprint
 
 class FairValue():
-	def __init__(self, symbol, num_eps_for_reg, num_eps_for_finance, market, Y = 1.8, no_growth_eps = 7, growth_factor = 1):
+	def __init__(self, symbol, market, num_eps_for_adj = 10, num_for_avg_eps = 5, Y = 1.8, no_growth_eps = 7, growth_factor = 1):
 		self.symbol = symbol
-		self.num_eps_for_reg = num_eps_for_reg
-		self.num_eps_for_finance = num_eps_for_finance
+		self.num_eps_for_adj = num_eps_for_adj
+		self.num_for_avg_eps = num_for_avg_eps
 		self.market = market # ETF|MUTUAL_FUND|COMMODITY|INDEX|CRYPTO|FOREX|TSX|AMEX|NASDAQ|NYSE|EURONEXT
 		self.Y = Y
 		self.no_growth_eps = no_growth_eps
@@ -34,28 +34,34 @@ class FairValue():
 		return average_stock_price_50_day
 
 	def get_eps(self):
-		"""Returns the eps liste"""
-		r = requests.get('https://financialmodelingprep.com/api/v3/financials/income-statement/' + self.symbol + '?period=quarter')
+		"""Returns all the eps into a list"""
+		r = requests.get('https://financialmodelingprep.com/api/v3/financials/income-statement/' + self.symbol)
 		eps = []
 		for item in json.loads(r.text)['financials']:
 			eps.append(float(item['EPS']))
 
 		return eps
 
-	def get_average_eps(self):
-		"""Returns the average eps from the quantity of num_eps_for_finance"""
+	def get_adjusted_eps(self):
+		"""Returns the adjusted eps over num_eps_for_adj previous years"""
+		eps = self.get_eps()
 		avg_eps = 0
-		for i in range(1, self.num_eps_for_finance):
-			avg_eps = (avg_eps + self.get_eps[i]) / i
+		for i in range(1, self.num_eps_for_adj):
+			avg_eps = (avg_eps + eps[i]) / i
 
 		return avg_eps
 
 	def get_expected_growth(self):
-		pass
+		"""Returns the expected growth as an average eps from the quantity of num_for_avg_eps"""
+		avg_eps = 0
+		for i in range(1, self.num_for_avg_eps):
+			avg_eps = (avg_eps + self.get_eps[i]) / i
+
+		return avg_eps
 
 	def get_company_fair_value(self):
 		"""Returns the fair value of the company"""
-		fair_value = self.get_average_eps() * (self.no_growth_eps + self.growth_factor * self.get_expected_growth()) * 4.4 / self.Y
+		fair_value = self.get_adjusted_eps() * (self.no_growth_eps + self.growth_factor * self.get_expected_growth()) * 4.4 / self.Y
 
 		return fair_value
 
