@@ -1,4 +1,4 @@
-import argparese
+import argparse
 
 def get_input_args():
     """Returns input arguments for main file execution"""

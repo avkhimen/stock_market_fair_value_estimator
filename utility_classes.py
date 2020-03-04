@@ -2,12 +2,11 @@ import requests
 import json
 from pprint import pprint
 
-class FairValue():
-	def __init__(self, symbol, market, num_eps_for_adj = 10, num_for_avg_eps = 5, Y = 1.8, no_growth_eps = 7, growth_factor = 1):
+class Company():
+	def __init__(self, symbol, num_eps_for_adj = 10, num_for_avg_eps = 5, Y = 1.8, no_growth_eps = 7, growth_factor = 1):
 		self.symbol = symbol
 		self.num_eps_for_adj = num_eps_for_adj
 		self.num_for_avg_eps = num_for_avg_eps
-		self.market = market # ETF|MUTUAL_FUND|COMMODITY|INDEX|CRYPTO|FOREX|TSX|AMEX|NASDAQ|NYSE|EURONEXT
 		self.Y = Y
 		self.no_growth_eps = no_growth_eps
 		self.growth_factor = growth_factor
@@ -38,26 +37,34 @@ class FairValue():
 		r = requests.get('https://financialmodelingprep.com/api/v3/financials/income-statement/' + self.symbol)
 		eps = []
 		for item in json.loads(r.text)['financials']:
-			eps.append(float(item['EPS']))
+			try:
+				eps.append(float(item['EPS']))
+			except Exception as e:
+				pass
 
 		return eps
+
+	def get_eps_length(self):
+		eps = self.get_eps()
+		return len(eps)
 
 	def get_adjusted_eps(self):
 		"""Returns the adjusted eps over num_eps_for_adj previous years"""
 		eps = self.get_eps()
-		avg_eps = 0
-		for i in range(1, self.num_eps_for_adj):
-			avg_eps = (avg_eps + eps[i]) / i
+		adj_eps = 0
+		iter_length = min(self.get_eps_length(), self.num_eps_for_adj)
+		for i in range(1, iter_length):
+			adj_eps = (adj_eps + eps[i]) / i
 
-		return avg_eps
+		return adj_eps
 
 	def get_expected_growth(self):
 		"""Returns the expected growth as an average eps from the quantity of num_for_avg_eps"""
-		avg_eps = 0
-		for i in range(1, self.num_for_avg_eps):
-			avg_eps = (avg_eps + self.get_eps[i]) / i
+		eps = self.get_eps()
+		iter_length = min(self.get_eps_length(), self.num_for_avg_eps)
+		expected_growth = 100*(abs((eps[iter_length - 1]-eps[0]) / (iter_length - 1)))/abs(eps[iter_length - 1])
 
-		return avg_eps
+		return expected_growth
 
 	def get_company_fair_value(self):
 		"""Returns the fair value of the company"""
@@ -67,7 +74,7 @@ class FairValue():
 
 class Symbols:
 	def __init__(self, market):
-		self.market = market
+		self.market = market # ETF|MUTUAL_FUND|COMMODITY|INDEX|CRYPTO|FOREX|TSX|AMEX|NASDAQ|NYSE|EURONEXT
 
 	def get_all_symbols(self):
 		"""Returns the list of symbols for each exchange"""
@@ -78,34 +85,31 @@ class Symbols:
 
 		return symbols
 
-class UndervaluedCompanies():
-	def __init__(self, fair_value, actual_value):
+class UndervaluedCompany():
+	def __init__(self, fair_value, actual_value, num_of_eps_statements, min_num_of_eps_statements = 4):
 		self.fair_value = fair_value
 		self.actual_value = actual_value
-
-	def return_undervalued_company(self):
-		if self.is_company_undervalued():
-			return True
-		else:
-			return False
+		self.num_of_eps_statements = num_of_eps_statements
+		self.min_num_of_eps_statements = min_num_of_eps_statements
 
 	def is_company_undervalued(self):
-		if self.fair_value < self.actual_value:
+		if self.fair_value < self.actual_value and self.num_of_eps_statements > self.min_num_of_eps_statements:
 			return True
 		else:
 			return False
 
 class CompanyRecord:
-	def __init__(self, company_symbol, current_value, fair_value, document_name):
+	def __init__(self, company_symbol, fair_value, current_value, market):
 		self.company_symbol = company_symbol
-		self.current_value = current_value
 		self.fair_value = fair_value
-		self.document_name = document_name
+		self.current_value = current_value
+		self.document_name = str(market + '.txt')
 
 	def create_record(self):
 		"""Opens the document and werites info"""
 		f = open(self.document_name, "a+")
 		f.write("{}, current value:, {}, fair value:, {}\r".format(self.company_symbol, self.current_value, self.fair_value))
+		print("Created record for {}".format(self.company_symbol))
 		f.close()
 
 
