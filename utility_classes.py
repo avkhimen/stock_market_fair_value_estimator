@@ -45,6 +45,7 @@ class Company():
 		return eps
 
 	def get_eps_length(self):
+		"""Returns the number of eps statements available"""
 		eps = self.get_eps()
 		return len(eps)
 
@@ -93,7 +94,8 @@ class UndervaluedCompany():
 		self.min_num_of_eps_statements = min_num_of_eps_statements
 
 	def is_company_undervalued(self):
-		if self.fair_value < self.actual_value and self.num_of_eps_statements > self.min_num_of_eps_statements:
+		"""Returns true or false depending is fair_value is less then stock price and number of eps is more than minimum"""
+		if self.fair_value > self.actual_value and self.num_of_eps_statements > self.min_num_of_eps_statements:
 			return True
 		else:
 			return False
@@ -109,7 +111,7 @@ class CompanyRecord:
 		"""Opens the document and werites info"""
 		f = open(self.document_name, "a+")
 		f.write("{}, current value:, {}, fair value:, {}\r".format(self.company_symbol, self.current_value, self.fair_value))
-		print("Created record for {}".format(self.company_symbol))
+		print("#######################Created record for {}".format(self.company_symbol))
 		f.close()
 
 
